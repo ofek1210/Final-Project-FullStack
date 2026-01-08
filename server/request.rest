@@ -15,14 +15,16 @@ Content-Type: application/json
 ###
 
 ### Login
-POST http://localhost:3000/api/auth/login
+POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
   "username": "ofek",
   "password": "123456"
 }
-
+###
+GET http://localhost:3000/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTVmODMzM2MzYTk1M2Y4ZmMxY2VmYmEiLCJ1c2VybmFtZSI6Im9mZWsiLCJpYXQiOjE3Njc4NjgzNTQsImV4cCI6MTc2Nzg3MTk1NH0.XslHyy75l3PnH5tuVcoQS_YJoJFzfx5vBvpN2WqwByc
 ###
 
 
