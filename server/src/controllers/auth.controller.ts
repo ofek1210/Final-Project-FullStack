@@ -44,12 +44,12 @@ export const authController = {
 
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ error: "invalid credentials" });
+      return res.status(401).json({ error: "Invalid username or password" });
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) {
-      return res.status(401).json({ error: "invalid credentials" });
+      return res.status(401).json({ error: "Invalid username or password" });
     }
 
     const token = signToken({ userId: String(user._id), username: user.username });

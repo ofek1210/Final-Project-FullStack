@@ -47,10 +47,10 @@ async function login(req, res) {
         }
         const user = await User_1.User.findOne({ username });
         if (!user)
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: "Invalid username or password" });
         const isMatch = await bcrypt_1.default.compare(password, user.passwordHash);
         if (!isMatch)
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: "Invalid username or password" });
         const token = signToken(user.id);
         return res.json({
             user: { id: user.id, username: user.username, createdAt: user.createdAt, updatedAt: user.updatedAt },

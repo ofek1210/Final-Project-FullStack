@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export default function AuthShell({   // ⭐ export default
+export default function AuthShell({   
   title,
   subtitle,
   children,
@@ -14,13 +14,6 @@ export default function AuthShell({   // ⭐ export default
       <div className="container h-100 d-flex align-items-center">
         <div className="row w-100 justify-content-center">
         <div className="col-12 col-md-10 col-lg-8">
-            <div className="mb-3 text-center">
-              <span className="brand-pill">
-                <i className="bi bi-shield-lock" />
-                <span className="fw-semibold">Auth</span>
-                <span className="text-white-50">• Glass UI</span>
-              </span>
-            </div>
 
             <div className="glass-card p-4 p-md-5">
               <h1 className="h3 mb-1">{title}</h1>
