@@ -11,6 +11,7 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
+  const [googleProfile, setGoogleProfile] = useState<{ name?: string; email?: string; picture?: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,16 +26,56 @@ export default function Login() {
   }
 
   // Google OAuth success handler (client-side only; backend exchange not implemented)
-  function handleGoogleSuccess(response: any) {
-    // response.credential contains the JWT from Google
-    if (!response?.credential) {
-      setMsg("Google sign-in failed: no credential returned");
+  async function handleGoogleSuccess(response: any) {
+    // Google responses can have different shapes depending on flow:
+    // - credential (ID token) => response.credential
+    // - auth code (server flow) => response.code
+    // - implicit token => response.access_token
+    console.log("Full Google response:", response);
+
+    if (response?.credential) {
+      // ID token flow (JWT) — decode payload for demo
+      try {
+        const parts = response.credential.split('.');
+        if (parts.length >= 2) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          setGoogleProfile({ name: payload.name, email: payload.email, picture: payload.picture });
+          setMsg("Google sign-in successful (id_token decoded). For production, send to backend to validate.");
+          return;
+        }
+      } catch (err) {
+        console.error('id_token decode failed', err);
+        setMsg('Google sign-in succeeded but failed to decode id_token');
+        return;
+      }
+    }
+
+    if (response?.code) {
+      // Authorization code flow (send code to backend to exchange)
+      console.log("Google auth code:", response.code);
+      setMsg("Google sign-in successful (auth code returned). Send to backend to exchange for token.");
       return;
     }
 
-    console.log("Google credential:", response.credential);
-    setMsg("Google sign-in successful (not wired to backend yet)");
-    // TODO: send response.credential to your backend to exchange for an app session token
+    if (response?.access_token) {
+      // Implicit flow (access token returned) — fetch profile from Google
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${response.access_token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch user info');
+        const profile = await res.json();
+        setGoogleProfile({ name: profile.name, email: profile.email, picture: profile.picture });
+        setMsg("Google sign-in successful — profile fetched (client-only demo). For production, exchange on backend.");
+        return;
+      } catch (err: any) {
+        console.error('fetch userinfo failed', err);
+        setMsg('Failed to fetch Google user info');
+        return;
+      }
+    }
+
+    setMsg("Google sign-in failed: no credential returned. See console for response.");
   }
 
   // Use Google login hook only if provider is configured; otherwise fallback to a noop that reports misconfiguration
@@ -44,6 +85,8 @@ export default function Login() {
     ? useGoogleLogin({
         onSuccess: handleGoogleSuccess,
         onError: () => setMsg("Google sign-in failed"),
+        flow: "implicit",
+        scope: "openid profile email",
       })
     : () => setMsg("Google OAuth not configured");
 
@@ -131,6 +174,17 @@ export default function Login() {
             )}
           </div>
         </div>
+
+        {googleProfile && (
+          <div className="google-profile d-flex align-items-center gap-3 mt-3 p-2">
+            <img src={googleProfile.picture} alt="avatar" width={56} height={56} className="rounded-circle" />
+            <div>
+              <div className="fw-semibold">{googleProfile.name}</div>
+              <small className="text-white-50">{googleProfile.email}</small>
+            </div>
+          </div>
+        )}
+
         <div className="d-flex justify-content-between align-items-center">
           <small className="text-white-50">No account?</small>
           <Link className="muted-link" to="/register">

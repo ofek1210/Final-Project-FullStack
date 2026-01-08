@@ -164,6 +164,14 @@ html,body,#root{
   color: rgba(230,245,255,0.75) !important;
 }
 
+/* Google profile preview */
+.google-profile{
+  background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.02);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+}
+
 /* Accessibility: focus visible */
 .glass-input:focus-visible, .neon-btn:focus-visible{
   outline: 2px solid rgba(0,240,255,0.12);
