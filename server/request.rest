@@ -1,31 +1,27 @@
-### Health
-GET http://localhost:3000/health
-
-###
-
 ### Register
+# @name register
 POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "username": "ofek",
+  "username": "ofek1",
   "password": "123456"
 }
 
 ###
 
 ### Login
+# @name login
 POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "username": "ofek",
+  "username": "ofek1",
   "password": "123456"
 }
+
 ###
+
+### Me (Protected) - uses token from login
 GET http://localhost:3000/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTVmODMzM2MzYTk1M2Y4ZmMxY2VmYmEiLCJ1c2VybmFtZSI6Im9mZWsiLCJpYXQiOjE3Njc4NjgzNTQsImV4cCI6MTc2Nzg3MTk1NH0.XslHyy75l3PnH5tuVcoQS_YJoJFzfx5vBvpN2WqwByc
-###
-
-
-
+Authorization: Bearer {{login.response.body.token}}
