@@ -1,43 +1,83 @@
 import { useState } from "react";
-import { login } from "../features/auth/auth.api";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../features/auth/AuthContext";
+import AuthShell from "../components/AuthShell";
 
 export default function Login() {
+  const { login } = useAuth();
+  const nav = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setMsg("");
 
     try {
       await login(username, password);
-      alert("Logged in successfully");
+      nav("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      setMsg(err.message);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Login</h2>
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to continue. Your session will be verified via /me."
+    >
+      <form onSubmit={handleSubmit} className="d-grid gap-3">
+        <div>
+          <label className="form-label text-white-50">Username</label>
+          <div className="input-group">
+            <span className="input-group-text bg-transparent text-white border-0">
+              <i className="bi bi-person" />
+            </span>
+            <input
+              className="form-control neon-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="ofek"
+              autoComplete="username"
+            />
+          </div>
+        </div>
 
-      <input
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <div>
+          <label className="form-label text-white-50">Password</label>
+          <div className="input-group">
+            <span className="input-group-text bg-transparent text-white border-0">
+              <i className="bi bi-key" />
+            </span>
+            <input
+              type="password"
+              className="form-control neon-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+            />
+          </div>
+        </div>
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <button className="btn neon-btn w-100 fw-semibold" type="submit">
+          Login
+        </button>
 
-      <button type="submit">Login</button>
+        {msg && (
+          <div className="alert alert-danger mb-0 py-2">
+            <small>{msg}</small>
+          </div>
+        )}
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </form>
+        <div className="d-flex justify-content-between align-items-center">
+          <small className="text-white-50">No account?</small>
+          <Link className="muted-link" to="/register">
+            Create one
+          </Link>
+        </div>
+      </form>
+    </AuthShell>
   );
 }

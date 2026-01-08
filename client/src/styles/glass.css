@@ -1,0 +1,54 @@
+:root{
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.18);
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.68);
+}
+
+html, body, #root{
+  height: 100%;
+}
+
+body{
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(0, 255, 255, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 90% 20%, rgba(255, 120, 0, 0.20), transparent 55%),
+    radial-gradient(1000px 600px at 50% 90%, rgba(160, 80, 255, 0.18), transparent 55%),
+    linear-gradient(180deg, #06060a 0%, #0b0b12 100%);
+  overflow-x: hidden;
+}
+
+.glass-card{
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+}
+
+.glass-input{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+  color: var(--text) !important;
+}
+
+.glass-input::placeholder{
+  color: rgba(255,255,255,0.55) !important;
+}
+
+.glass-btn{
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.brand-pill{
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+}
