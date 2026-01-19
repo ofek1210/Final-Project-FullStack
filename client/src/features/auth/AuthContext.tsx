@@ -8,6 +8,7 @@ type AuthState = {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  updateProfile: (profile: authApi.ProfileUpdate) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -26,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const res = await authApi.me();
-        setUser({ userId: res.user.userId, username: res.user.username });
+        setUser(res.user);
       } catch {
         localStorage.removeItem("token");
         setUser(null);
@@ -41,18 +42,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function login(username: string, password: string) {
     await authApi.login(username, password);
     const res = await authApi.me();
-    setUser({ userId: res.user.userId, username: res.user.username });
+    setUser(res.user);
   }
 
   async function register(username: string, password: string) {
     await authApi.register(username, password);
     const res = await authApi.me();
-    setUser({ userId: res.user.userId, username: res.user.username });
+    setUser(res.user);
   }
 
   function logout() {
     authApi.logout();
     setUser(null);
+  }
+
+  async function updateProfile(profile: authApi.ProfileUpdate) {
+    const res = await authApi.updateMe(profile);
+    setUser(res.user);
   }
 
   const value = useMemo(
@@ -63,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       register,
       logout,
+      updateProfile,
     }),
     [user, isLoading]
   );
