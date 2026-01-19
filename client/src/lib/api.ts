@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "https://localhost:3000";
 
 export async function api<T>(
   path: string,
@@ -23,4 +23,3 @@ export async function api<T>(
 
   return data as T;
 }
-
