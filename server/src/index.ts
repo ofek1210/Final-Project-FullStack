@@ -1,11 +1,35 @@
 import "dotenv/config";
 import https from "node:https";
 import fs from "node:fs";
-import path from "node:path";
 import app from "./app";
 import { connectDB } from "./config/db";
+import path from "path";
+import swaggerUi from "swagger-ui-express";
+import swaggerJSDoc from "swagger-jsdoc";
+
 
 const PORT = Number(process.env.PORT);
+
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "My API",
+      version: "1.0.0",
+    },
+    servers: [{ url: "https://localhost:3000" }],
+  },
+  // הכי חשוב: נתיב מוחלט, לא יחסי
+  apis: [path.resolve(process.cwd(), "src/**/*.ts")],
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions as any);
+
+console.log("Swagger scanning:", swaggerOptions.apis);
+console.log("Swagger paths found:", Object.keys(swaggerSpec.paths || {}).length);
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
 
 function resolveCertPath(filePath: string) {
   return path.isAbsolute(filePath) ? filePath : path.resolve(__dirname, "..", filePath);
