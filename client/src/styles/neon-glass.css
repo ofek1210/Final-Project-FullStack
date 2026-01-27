@@ -34,19 +34,10 @@ html,body,#root{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:2rem; /* slightly smaller padding so the card truly feels centered */
+  padding:0;
   position:relative;
   overflow:hidden;
   box-sizing: border-box;
-}
-
-/* Ensure the inner bootstrap container occupies full height and centers its content */
-.auth-page .container{
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:0; /* remove container side padding to avoid visual offset */
 }
 
 /* Frosted glass card (leverage existing .glass-card) */

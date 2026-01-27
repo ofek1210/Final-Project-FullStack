@@ -1,24 +1,61 @@
+import { getAccessToken } from "../features/auth/tokenStorage";
+
 const BASE_URL = "https://localhost:3000";
+
+type ApiOptions = RequestInit & { skipRefresh?: boolean };
+
+let refreshHandler: (() => Promise<string | null>) | null = null;
+
+export function setRefreshHandler(handler: () => Promise<string | null>) {
+  refreshHandler = handler;
+}
+
+function isAuthPath(path: string) {
+  return ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout", "/auth/google"].includes(path);
+}
 
 export async function api<T>(
   path: string,
-  options: RequestInit = {}
+  options: ApiOptions = {},
+  hasRetried = false
 ): Promise<T> {
-  const token = localStorage.getItem("token");
+  const { skipRefresh, ...fetchOptions } = options;
+  const token = getAccessToken();
+
+  const headers = new Headers(fetchOptions.headers || {});
+  const isFormData = typeof FormData !== "undefined" && fetchOptions.body instanceof FormData;
+
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
 
   const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
+    ...fetchOptions,
+    headers,
   });
 
-  const data = await res.json();
+  if (res.status === 401 && !skipRefresh && !hasRetried && refreshHandler && !isAuthPath(path)) {
+    const refreshedToken = await refreshHandler();
+    if (refreshedToken) {
+      const retryHeaders = new Headers(fetchOptions.headers || {});
+      if (!isFormData && !retryHeaders.has("Content-Type")) {
+        retryHeaders.set("Content-Type", "application/json");
+      }
+      retryHeaders.set("Authorization", `Bearer ${refreshedToken}`);
+      return api<T>(path, { ...fetchOptions, headers: retryHeaders, skipRefresh: true }, true);
+    }
+  }
+
+  const contentType = res.headers.get("content-type") || "";
+  const data = contentType.includes("application/json") ? await res.json() : null;
 
   if (!res.ok) {
-    throw new Error(data.error || "Request failed");
+    const error = new Error((data as { error?: string } | null)?.error || "Request failed");
+    (error as { status?: number }).status = res.status;
+    throw error;
   }
 
   return data as T;

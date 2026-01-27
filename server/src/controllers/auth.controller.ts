@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import crypto from "node:crypto";
 import jwt, { type Secret } from "jsonwebtoken";
 import { User } from "../models/User";
 
@@ -17,6 +18,40 @@ function signRefreshToken(payload: { userId: string }) {
 
   const expiresIn = (process.env.REFRESH_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"];
   return jwt.sign(payload, secret, { expiresIn });
+}
+
+type GoogleProfile = {
+  sub?: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+};
+
+async function fetchGoogleProfile(accessToken: string) {
+  const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch Google profile");
+  }
+
+  const data = (await res.json()) as GoogleProfile;
+  return data;
+}
+
+async function generateUniqueUsername(base: string) {
+  const normalized = base.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "");
+  const seed = normalized || `user${Date.now()}`;
+  let candidate = seed.slice(0, 24);
+  let suffix = 0;
+
+  while (await User.exists({ username: candidate })) {
+    suffix += 1;
+    candidate = `${seed.slice(0, 20)}${suffix}`;
+  }
+
+  return candidate;
 }
 
 export const authController = {
@@ -123,5 +158,71 @@ export const authController = {
     }
 
     return res.status(204).send();
-  }
+  },
+
+  async googleLogin(req: Request, res: Response) {
+    const { accessToken } = req.body as { accessToken?: string };
+    if (!accessToken) return res.status(400).json({ error: "accessToken is required" });
+
+    try {
+      const profile = await fetchGoogleProfile(accessToken);
+      if (!profile.sub) return res.status(400).json({ error: "Google profile missing id" });
+
+      let user = await User.findOne({ oauthProvider: "google", oauthId: profile.sub });
+      if (!user && profile.email) {
+        user = await User.findOne({ email: profile.email });
+      }
+
+      if (!user) {
+        const usernameBase = profile.email ? profile.email.split("@")[0] : profile.name || "google-user";
+        const username = await generateUniqueUsername(usernameBase);
+        const passwordHash = await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10);
+
+        user = await User.create({
+          username,
+          passwordHash,
+          fullName: profile.name || "",
+          email: profile.email || "",
+          avatarUrl: profile.picture || "",
+          oauthProvider: "google",
+          oauthId: profile.sub,
+        });
+      } else {
+        let shouldSave = false;
+        if (!user.oauthProvider) {
+          user.oauthProvider = "google";
+          shouldSave = true;
+        }
+        if (!user.oauthId) {
+          user.oauthId = profile.sub || "";
+          shouldSave = true;
+        }
+        if (profile.name && !user.fullName) {
+          user.fullName = profile.name;
+          shouldSave = true;
+        }
+        if (profile.email && !user.email) {
+          user.email = profile.email;
+          shouldSave = true;
+        }
+        if (profile.picture && !user.avatarUrl) {
+          user.avatarUrl = profile.picture;
+          shouldSave = true;
+        }
+        if (shouldSave) {
+          await user.save();
+        }
+      }
+
+      const accessTokenJwt = signAccessToken({ userId: String(user._id), username: user.username });
+      const refreshToken = signRefreshToken({ userId: String(user._id) });
+
+      user.refreshTokens = (user.refreshTokens || []).concat(refreshToken);
+      await user.save();
+
+      return res.json({ token: accessTokenJwt, refreshToken });
+    } catch (err) {
+      return res.status(401).json({ error: "Google authentication failed" });
+    }
+  },
 };

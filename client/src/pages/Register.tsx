@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useAuth } from "../features/auth/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import AuthShell from "../components/AuthShell";
+
+function getErrorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
 
 export default function Register() {
   const { register } = useAuth();
@@ -11,15 +15,15 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setMsg("");
 
     try {
       await register(username, password);
       nav("/dashboard");
-    } catch (err: any) {
-      setMsg(err.message);
+    } catch (err: unknown) {
+      setMsg(getErrorMessage(err, "Registration failed"));
     }
   }
 

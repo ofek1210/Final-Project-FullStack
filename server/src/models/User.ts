@@ -12,6 +12,8 @@ const userSchema = new Schema(
     phone: { type: String, trim: true, default: "" },
     city: { type: String, trim: true, default: "" },
     bio: { type: String, trim: true, default: "" },
+    oauthProvider: { type: String, trim: true, default: "" },
+    oauthId: { type: String, trim: true, default: "" },
     // store issued refresh tokens (one per device/session). In production you may want to hash these.
     refreshTokens: { type: [String], default: [] }
   },

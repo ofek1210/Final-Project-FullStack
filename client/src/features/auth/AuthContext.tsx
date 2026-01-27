@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import * as authApi from "./auth.api";
+import { clearTokens, getAccessToken, getRefreshToken } from "./tokenStorage";
 
 type AuthState = {
   user: authApi.User | null;
@@ -7,29 +8,34 @@ type AuthState = {
   isAuthed: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
+  loginWithGoogle: (accessToken: string) => Promise<void>;
   logout: () => void;
-  updateProfile: (profile: authApi.ProfileUpdate) => Promise<void>;
+  updateProfile: (profile: authApi.ProfileUpdate, avatarFile?: File | null) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<authApi.User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function bootstrap() {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const token = getAccessToken();
+      const refreshToken = getRefreshToken();
+      if (!token && !refreshToken) {
         setIsLoading(false);
         return;
       }
 
       try {
+        if (!token && refreshToken) {
+          await authApi.refreshSession();
+        }
         const res = await authApi.me();
         setUser(res.user);
       } catch {
-        localStorage.removeItem("token");
+        clearTokens();
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -51,13 +57,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.user);
   }
 
+  async function loginWithGoogle(accessToken: string) {
+    await authApi.loginWithGoogle(accessToken);
+    const res = await authApi.me();
+    setUser(res.user);
+  }
+
   function logout() {
-    authApi.logout();
+    void authApi.logout();
     setUser(null);
   }
 
-  async function updateProfile(profile: authApi.ProfileUpdate) {
-    const res = await authApi.updateMe(profile);
+  async function updateProfile(profile: authApi.ProfileUpdate, avatarFile?: File | null) {
+    const res = await authApi.updateUserProfile(profile, avatarFile);
     setUser(res.user);
   }
 
@@ -68,6 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthed: Boolean(user),
       login,
       register,
+      loginWithGoogle,
       logout,
       updateProfile,
     }),

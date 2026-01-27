@@ -1,1 +1,6 @@
 certs/
+node_modules/
+uploads/
+!uploads/.keep
+.env
+.env.*
