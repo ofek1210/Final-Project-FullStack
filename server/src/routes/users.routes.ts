@@ -57,6 +57,12 @@ router.get("/me", authMiddleware, usersController.getMe);
  *                 type: string
  *               avatarUrl:
  *                 type: string
+ *               email:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *               gender:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Updated user
@@ -83,6 +89,12 @@ router.put("/me", authMiddleware, usersController.updateMe);
  *               avatar:
  *                 type: string
  *                 format: binary
+ *               email:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *               gender:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Updated user

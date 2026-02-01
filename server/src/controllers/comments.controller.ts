@@ -45,12 +45,13 @@ export const commentsController = {
     const postId = req.params.id;
     const { limit, skip } = parsePaging(req);
 
-    const comments = await Comment.find({ postId: new Types.ObjectId(postId) })
+    const comments: CommentLean[] = await Comment.find({ postId: new Types.ObjectId(postId) })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate("authorId", "username avatarUrl")
-      .lean<CommentLean>();
+      .lean<CommentLean[]>()
+      .exec();
 
     const items = comments.map(toCommentResponse);
 

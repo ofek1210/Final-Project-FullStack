@@ -17,11 +17,15 @@ export type User = {
   phone?: string;
   city?: string;
   bio?: string;
+  oauthProvider?: string;
 };
 
 export type ProfileUpdate = {
   username?: string;
   avatarUrl?: string;
+  email?: string;
+  birthDate?: string;
+  gender?: string;
 };
 
 export async function login(username: string, password: string) {
@@ -35,10 +39,19 @@ export async function login(username: string, password: string) {
   return res;
 }
 
-export async function register(username: string, password: string) {
+export async function register(username: string, password: string, email?: string) {
+  const payload: { username: string; password: string; email?: string } = {
+    username,
+    password,
+  };
+  const trimmedEmail = email?.trim();
+  if (trimmedEmail) {
+    payload.email = trimmedEmail;
+  }
+
   const res = await api<{ token: string; refreshToken: string }>("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify(payload),
   });
 
   setAccessToken(res.token);
@@ -90,7 +103,7 @@ export async function updateUserProfile(profile: ProfileUpdate, avatarFile?: Fil
   const formData = new FormData();
 
   Object.entries(profile).forEach(([key, value]) => {
-    if (typeof value === "string") {
+    if (typeof value === "string" && value.trim() !== "") {
       formData.append(key, value);
     }
   });

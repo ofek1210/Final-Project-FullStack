@@ -37,6 +37,8 @@
  *           type: string
  *         bio:
  *           type: string
+ *         oauthProvider:
+ *           type: string
  *     Post:
  *       type: object
  *       properties:

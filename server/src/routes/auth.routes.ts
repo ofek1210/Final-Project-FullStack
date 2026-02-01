@@ -21,6 +21,8 @@ const router = Router();
  *                 type: string
  *               password:
  *                 type: string
+ *               email:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Registered

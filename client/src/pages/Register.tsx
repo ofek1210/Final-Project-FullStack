@@ -13,14 +13,21 @@ export default function Register() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setMsg("");
 
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(trimmedEmail)) {
+      setMsg("Please enter a valid email.");
+      return;
+    }
+
     try {
-      await register(username, password);
+      await register(username, password, trimmedEmail || undefined);
       nav("/dashboard");
     } catch (err: unknown) {
       setMsg(getErrorMessage(err, "Registration failed"));
@@ -38,6 +45,18 @@ export default function Register() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
             autoComplete="username"
+          />
+        </div>
+
+        <div>
+          <label className="form-label text-white-50">Email</label>
+          <input
+            type="email"
+            className="form-control neon-input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@email.com"
+            autoComplete="email"
           />
         </div>
 

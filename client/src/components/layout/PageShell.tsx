@@ -17,8 +17,11 @@ export default function PageShell({ children, maxWidth = 1100, style }: PageShel
       dir={getDirection()}
       style={{
         width: "100%",
-        padding: "24px 16px",
+        padding: "32px clamp(16px, 4vw, 24px)",
         boxSizing: "border-box",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
         ...style,
       }}
     >
@@ -26,7 +29,6 @@ export default function PageShell({ children, maxWidth = 1100, style }: PageShel
         style={{
           width: "100%",
           maxWidth,
-          margin: "0 auto",
         }}
       >
         {children}

@@ -6,6 +6,14 @@ import { fetchPosts, type Post } from "../features/posts/posts.api";
 
 const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const GENDER_VALUES = new Set(["male", "female", "other", "prefer_not_to_say"]);
+const GENDER_LABELS: Record<string, string> = {
+  male: "Male",
+  female: "Female",
+  other: "Other",
+  prefer_not_to_say: "Prefer not to say",
+};
 
 function getErrorMessage(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
@@ -17,6 +25,10 @@ export default function Dashboard() {
   const username = user?.username ?? "Unknown";
   const userId = user?.userId ?? "-";
   const displayName = user?.fullName?.trim() ? user.fullName : username;
+  const oauthProvider = user?.oauthProvider?.trim() ? user.oauthProvider : "local";
+  const isOauthUser = oauthProvider !== "local";
+  const hasEmail = Boolean(user?.email?.trim());
+  const canEditEmail = !isOauthUser || !hasEmail;
 
   // Fallback avatar
   const fallbackAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -36,6 +48,9 @@ export default function Dashboard() {
 
   const [form, setForm] = useState<ProfileUpdate>({
     username: user?.username ?? "",
+    email: user?.email ?? "",
+    birthDate: user?.birthDate ?? "",
+    gender: user?.gender ?? "",
   });
   const displayAvatarUrl = avatarPreviewUrl ?? avatarUrl;
 
@@ -46,6 +61,9 @@ export default function Dashboard() {
   useEffect(() => {
     setForm({
       username: user?.username ?? "",
+      email: user?.email ?? "",
+      birthDate: user?.birthDate ?? "",
+      gender: user?.gender ?? "",
     });
     setAvatarFile(null);
     setAvatarPreviewUrl(null);
@@ -123,6 +141,9 @@ export default function Dashboard() {
     clearAvatarSelection();
     setForm({
       username: user?.username ?? "",
+      email: user?.email ?? "",
+      birthDate: user?.birthDate ?? "",
+      gender: user?.gender ?? "",
     });
   }
 
@@ -134,14 +155,51 @@ export default function Dashboard() {
       return;
     }
 
+    const emailValue = form.email?.trim() ?? "";
+    if (emailValue && !EMAIL_REGEX.test(emailValue)) {
+      setStatus({ type: "error", message: "Email is not valid." });
+      return;
+    }
+
+    const birthDateValue = form.birthDate?.trim() ?? "";
+    if (birthDateValue) {
+      const parsed = new Date(`${birthDateValue}T00:00:00`);
+      if (Number.isNaN(parsed.getTime())) {
+        setStatus({ type: "error", message: "Birth date is not valid." });
+        return;
+      }
+      if (parsed > new Date()) {
+        setStatus({ type: "error", message: "Birth date cannot be in the future." });
+        return;
+      }
+    }
+
+    const genderValue = form.gender?.trim() ?? "";
+    if (genderValue && !GENDER_VALUES.has(genderValue)) {
+      setStatus({ type: "error", message: "Gender selection is not valid." });
+      return;
+    }
+
     setIsSaving(true);
     setStatus({ type: "", message: "" });
 
     try {
+      const update: ProfileUpdate = {
+        username: trimmedUsername,
+      };
+
+      if (canEditEmail && emailValue) {
+        update.email = emailValue;
+      }
+      if (birthDateValue) {
+        update.birthDate = birthDateValue;
+      }
+      if (genderValue) {
+        update.gender = genderValue;
+      }
+
       await updateProfile(
-        {
-          username: trimmedUsername,
-        },
+        update,
         avatarFile
       );
       setIsEditing(false);
@@ -239,6 +297,12 @@ export default function Dashboard() {
                 <strong>Email:</strong> {user.email}
               </div>
             )}
+            <div>
+              <strong>Birth date:</strong> {user?.birthDate || "—"}
+            </div>
+            <div>
+              <strong>Gender:</strong> {user?.gender ? GENDER_LABELS[user.gender] ?? user.gender : "—"}
+            </div>
           </div>
         )}
 
@@ -264,6 +328,54 @@ export default function Dashboard() {
                 placeholder="Username"
                 style={{ padding: 8, borderRadius: 6, border: "1px solid #d0d0d0" }}
               />
+            </label>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              Email
+              <input
+                value={form.email ?? ""}
+                onChange={(e) => updateField("email", e.target.value)}
+                placeholder="name@email.com"
+                readOnly={!canEditEmail}
+                disabled={!canEditEmail}
+                style={{
+                  padding: 8,
+                  borderRadius: 6,
+                  border: "1px solid #d0d0d0",
+                  background: !canEditEmail ? "rgba(255,255,255,0.12)" : "#fff",
+                }}
+              />
+              {!canEditEmail && (
+                <span style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: 12 }}>
+                  Email for OAuth users can be edited only with additional verification.
+                </span>
+              )}
+            </label>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              Date of Birth
+              <input
+                type="date"
+                value={form.birthDate ?? ""}
+                onChange={(e) => updateField("birthDate", e.target.value)}
+                placeholder="YYYY-MM-DD"
+                style={{ padding: 8, borderRadius: 6, border: "1px solid #d0d0d0" }}
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              Gender
+              <select
+                value={form.gender ?? ""}
+                onChange={(e) => updateField("gender", e.target.value)}
+                style={{ padding: 8, borderRadius: 6, border: "1px solid #d0d0d0" }}
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
             </label>
 
             <div style={{ display: "flex", gap: 8 }}>

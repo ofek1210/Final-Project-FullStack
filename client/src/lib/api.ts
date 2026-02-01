@@ -1,6 +1,7 @@
 import { getAccessToken } from "../features/auth/tokenStorage";
 
-const BASE_URL = "https://localhost:3000";
+const RAW_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "";
+const BASE_URL = RAW_BASE_URL.replace(/\/$/, "");
 
 type ApiOptions = RequestInit & { skipRefresh?: boolean };
 

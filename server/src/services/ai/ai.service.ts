@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { Post } from "../../models/Post";
-import { getEmbeddingProvider } from "./localEmbedding.provider";
+import { generateEmbedding, getEmbeddingModelName } from "./localEmbedding.provider";
 import {
   buildFallbackAnswer,
   buildLocalAnswer,
@@ -63,7 +63,6 @@ type ScoredPost = {
   score: number;
 };
 
-const provider = getEmbeddingProvider();
 const cache = new Map<string, CacheEntry>();
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -157,7 +156,7 @@ async function ensureEmbedding(post: PostLean, modelName: string) {
   }
 
   try {
-    const embedding = await provider.embed(post.text);
+    const embedding = await generateEmbedding(post.text);
     await Post.updateOne(
       { _id: post._id },
       { embedding, embeddingModel: modelName, embeddingUpdatedAt: new Date() }
@@ -216,13 +215,14 @@ export async function searchPosts(
     return cached.value;
   }
 
-  const modelName = provider.getModelName();
-  const queryEmbedding = await provider.embed(query);
+  const modelName = getEmbeddingModelName();
+  const queryEmbedding = await generateEmbedding(query);
 
-  const candidates = await Post.find()
+  const candidates: PostLean[] = await Post.find()
     .sort({ createdAt: -1 })
     .limit(CANDIDATE_LIMIT)
-    .lean<PostLean>();
+    .lean<PostLean[]>()
+    .exec();
 
   const scored: ScoredPost[] = [];
 

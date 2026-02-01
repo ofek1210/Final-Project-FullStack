@@ -74,12 +74,13 @@ export const postsController = {
     if (!userId) return res.status(401).json({ error: "unauthorized" });
 
     const { limit, skip } = parsePaging(req);
-    const posts = await Post.find()
+    const posts: PostLean[] = await Post.find()
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate("author", "username avatarUrl")
-      .lean<PostLean>();
+      .lean<PostLean[]>()
+      .exec();
 
     const postIds = posts.map((post) => post._id);
     const liked = await Like.find({
@@ -104,12 +105,13 @@ export const postsController = {
     if (!userId) return res.status(401).json({ error: "unauthorized" });
 
     const { limit, skip } = parsePaging(req);
-    const posts = await Post.find({ author: new Types.ObjectId(userId) })
+    const posts: PostLean[] = await Post.find({ author: new Types.ObjectId(userId) })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate("author", "username avatarUrl")
-      .lean<PostLean>();
+      .lean<PostLean[]>()
+      .exec();
 
     const postIds = posts.map((post) => post._id);
     const liked = await Like.find({

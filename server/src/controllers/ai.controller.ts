@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { searchPosts } from "../services/ai/ai.service";
-import { getEmbeddingProvider } from "../services/ai/localEmbedding.provider";
+import { getEmbeddingModelName } from "../services/ai/localEmbedding.provider";
 
 export const aiController = {
   async search(req: Request, res: Response) {
@@ -22,11 +22,10 @@ export const aiController = {
   },
 
   health(_req: Request, res: Response) {
-    const provider = getEmbeddingProvider();
     return res.json({
       ok: true,
       provider: "local",
-      model: provider.getModelName(),
+      model: getEmbeddingModelName(),
     });
   },
 };

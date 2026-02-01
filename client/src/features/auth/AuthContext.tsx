@@ -7,7 +7,7 @@ type AuthState = {
   isLoading: boolean;
   isAuthed: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string, email?: string) => Promise<void>;
   loginWithGoogle: (accessToken: string) => Promise<void>;
   logout: () => void;
   updateProfile: (profile: authApi.ProfileUpdate, avatarFile?: File | null) => Promise<void>;
@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user);
   }
 
-  async function register(username: string, password: string) {
-    await authApi.register(username, password);
+  async function register(username: string, password: string, email?: string) {
+    await authApi.register(username, password, email);
     const res = await authApi.me();
     setUser(res.user);
   }

@@ -15,7 +15,7 @@ export function createRateLimiter(options: RateLimitOptions) {
   const buckets = new Map<string, RateBucket>();
 
   return function rateLimiter(req: Request, res: Response, next: NextFunction) {
-    const key = options.keyGenerator ? options.keyGenerator(req) : req.user?.userId || req.ip;
+    const key = options.keyGenerator?.(req) ?? req.user?.userId ?? req.ip ?? "anonymous";
     const now = Date.now();
     const bucket = buckets.get(key);
 

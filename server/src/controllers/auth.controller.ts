@@ -4,6 +4,8 @@ import crypto from "node:crypto";
 import jwt, { type Secret } from "jsonwebtoken";
 import { User } from "../models/User";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+
 function signAccessToken(payload: { userId: string; username: string }) {
   const secret = process.env.JWT_SECRET as Secret;
   if (!secret) throw new Error("Missing JWT_SECRET");
@@ -56,7 +58,11 @@ async function generateUniqueUsername(base: string) {
 
 export const authController = {
   async register(req: Request, res: Response) {
-    const { username, password } = req.body as { username?: string; password?: string };
+    const { username, password, email } = req.body as {
+      username?: string;
+      password?: string;
+      email?: string;
+    };
 
     if (!username || !password) {
       return res.status(400).json({ error: "username and password are required" });
@@ -70,8 +76,25 @@ export const authController = {
       return res.status(409).json({ error: "username already exists" });
     }
 
+    let normalizedEmail: string | undefined;
+    if (typeof email === "string" && email.trim()) {
+      const trimmed = email.trim().toLowerCase();
+      if (!EMAIL_REGEX.test(trimmed)) {
+        return res.status(400).json({ error: "invalid email" });
+      }
+      const existingEmail = await User.findOne({ email: trimmed });
+      if (existingEmail) {
+        return res.status(409).json({ error: "email already exists" });
+      }
+      normalizedEmail = trimmed;
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, passwordHash });
+    const user = await User.create({
+      username,
+      passwordHash,
+      ...(normalizedEmail ? { email: normalizedEmail } : {}),
+    });
 
     const accessToken = signAccessToken({ userId: String(user._id), username: user.username });
     const refreshToken = signRefreshToken({ userId: String(user._id) });
