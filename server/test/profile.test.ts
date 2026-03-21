@@ -1,15 +1,19 @@
 import request from "supertest";
 import app from "../src/app";
-
-async function registerUser(username: string) {
-  const res = await request(app)
-    .post("/auth/register")
-    .send({ username, password: "password123" })
-    .expect(201);
-  return res.body as { token: string };
-}
+import { registerUser } from "./helpers";
 
 describe("Profile API", () => {
+  it("returns current user from GET /users/me", async () => {
+    const { token } = await registerUser("profile_get");
+
+    const meRes = await request(app)
+      .get("/users/me")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(meRes.body.user.username).toBe("profile_get");
+  });
+
   it("updates username and avatar", async () => {
     const { token } = await registerUser("profileuser");
 

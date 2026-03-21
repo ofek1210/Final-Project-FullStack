@@ -5,14 +5,7 @@ jest.mock("../src/services/ai/localEmbedding.provider", () => ({
 
 import request from "supertest";
 import app from "../src/app";
-
-async function registerUser(username: string) {
-  const res = await request(app)
-    .post("/auth/register")
-    .send({ username, password: "password123" })
-    .expect(201);
-  return res.body as { token: string };
-}
+import { registerUser } from "./helpers";
 
 describe("Comments API", () => {
   it("adds and lists comments", async () => {
@@ -40,5 +33,14 @@ describe("Comments API", () => {
       .expect(200);
 
     expect(listRes.body.items.length).toBe(1);
+  });
+
+  it("returns 404 when post does not exist", async () => {
+    const { token } = await registerUser("comment_404");
+    await request(app)
+      .post("/posts/507f1f77bcf86cd799439011/comments")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ text: "orphan" })
+      .expect(404);
   });
 });

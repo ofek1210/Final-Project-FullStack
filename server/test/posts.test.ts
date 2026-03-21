@@ -5,16 +5,13 @@ jest.mock("../src/services/ai/localEmbedding.provider", () => ({
 
 import request from "supertest";
 import app from "../src/app";
-
-async function registerUser(username: string) {
-  const res = await request(app)
-    .post("/auth/register")
-    .send({ username, password: "password123" })
-    .expect(201);
-  return res.body as { token: string };
-}
+import { registerUser } from "./helpers";
 
 describe("Posts API", () => {
+  it("rejects unauthenticated list", async () => {
+    await request(app).get("/posts").expect(401);
+  });
+
   it("creates, lists, updates, and deletes posts", async () => {
     const { token } = await registerUser("poster1");
 
@@ -34,6 +31,21 @@ describe("Posts API", () => {
     expect(listRes.body.items.length).toBe(1);
 
     const postId = createRes.body.id as string;
+
+    const getRes = await request(app)
+      .get(`/posts/${postId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(getRes.body.text).toBe("Hello world");
+
+    const mineRes = await request(app)
+      .get("/posts/mine")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(mineRes.body.items.length).toBe(1);
+    expect(mineRes.body.items[0].id).toBe(postId);
 
     const updateRes = await request(app)
       .put(`/posts/${postId}`)

@@ -1,19 +1,19 @@
 import { Post } from "../src/models/Post";
 
-const mockProvider = {
-  getModelName: () => "test-model",
-  embed: jest.fn<Promise<number[]>, [string]>(),
-};
-
 jest.mock("../src/services/ai/localEmbedding.provider", () => ({
-  getEmbeddingProvider: () => mockProvider,
+  generateEmbedding: jest.fn().mockResolvedValue([1, 0]),
+  getEmbeddingModelName: () => "test-model",
 }));
 
+import { generateEmbedding } from "../src/services/ai/localEmbedding.provider";
 import { searchPosts } from "../src/services/ai/ai.service";
+
+const mockGenerateEmbedding = jest.mocked(generateEmbedding);
 
 describe("ai.searchPosts", () => {
   beforeEach(() => {
-    mockProvider.embed.mockReset();
+    mockGenerateEmbedding.mockReset();
+    mockGenerateEmbedding.mockResolvedValue([1, 0]);
   });
 
   it("returns ranked posts when relevant matches exist", async () => {
@@ -32,8 +32,6 @@ describe("ai.searchPosts", () => {
       embeddingModel: "test-model",
       embeddingUpdatedAt: new Date(Date.now() + 1000),
     });
-
-    mockProvider.embed.mockResolvedValueOnce([1, 0]);
 
     const result = await searchPosts("react hooks", 5, true);
 
@@ -55,8 +53,6 @@ describe("ai.searchPosts", () => {
       embeddingModel: "test-model",
       embeddingUpdatedAt: new Date(Date.now() + 1000),
     });
-
-    mockProvider.embed.mockResolvedValueOnce([1, 0]);
 
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

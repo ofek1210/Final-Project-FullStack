@@ -315,7 +315,12 @@ export default function Feed() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
               <div>
-                <div style={{ fontWeight: 600 }}>{post.author.username}</div>
+                <Link
+                  to={`/users/${post.author.userId}`}
+                  style={{ fontWeight: 600, color: "#e0e7ff", textDecoration: "none" }}
+                >
+                  {post.author.username}
+                </Link>
                 <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
                   {new Date(post.createdAt).toLocaleString()}
                 </div>

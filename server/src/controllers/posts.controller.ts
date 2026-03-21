@@ -131,6 +131,42 @@ export const postsController = {
     });
   },
 
+  async getByAuthor(req: Request, res: Response) {
+    const viewerId = req.user?.userId;
+    if (!viewerId) return res.status(401).json({ error: "unauthorized" });
+
+    const { userId } = req.params;
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "invalid user id" });
+    }
+
+    const { limit, skip } = parsePaging(req);
+    const posts: PostLean[] = await Post.find({ author: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("author", "username avatarUrl")
+      .lean<PostLean[]>()
+      .exec();
+
+    const postIds = posts.map((post) => post._id);
+    const liked = await Like.find({
+      userId: new Types.ObjectId(viewerId),
+      postId: { $in: postIds },
+    })
+      .select("postId")
+      .lean();
+
+    const likedSet = new Set(liked.map((item) => String(item.postId)));
+    const items = posts.map((post) => toPostResponse(post, likedSet.has(String(post._id))));
+
+    return res.json({
+      items,
+      nextSkip: skip + items.length,
+      hasMore: items.length === limit,
+    });
+  },
+
   async getById(req: Request, res: Response) {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: "unauthorized" });

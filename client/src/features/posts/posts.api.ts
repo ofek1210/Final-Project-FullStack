@@ -43,6 +43,15 @@ export async function fetchPosts(params: { skip?: number; limit?: number; mine?:
   return api<PagedResponse<Post>>(path);
 }
 
+export async function fetchPostsByUser(userId: string, params: { skip?: number; limit?: number }) {
+  const search = new URLSearchParams();
+  if (params.skip) search.set("skip", String(params.skip));
+  if (params.limit) search.set("limit", String(params.limit));
+  const base = `/posts/by-user/${userId}`;
+  const path = search.toString() ? `${base}?${search.toString()}` : base;
+  return api<PagedResponse<Post>>(path);
+}
+
 export async function fetchPost(postId: string) {
   return api<Post>(`/posts/${postId}`);
 }

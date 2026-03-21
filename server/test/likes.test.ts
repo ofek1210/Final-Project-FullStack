@@ -5,14 +5,7 @@ jest.mock("../src/services/ai/localEmbedding.provider", () => ({
 
 import request from "supertest";
 import app from "../src/app";
-
-async function registerUser(username: string) {
-  const res = await request(app)
-    .post("/auth/register")
-    .send({ username, password: "password123" })
-    .expect(201);
-  return res.body as { token: string };
-}
+import { registerUser } from "./helpers";
 
 describe("Likes API", () => {
   it("likes and unlikes a post", async () => {

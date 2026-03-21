@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { Types } from "mongoose";
 import { User, type UserDoc } from "../models/User";
 import { buildUploadUrl } from "../lib/uploads";
 
@@ -54,7 +55,30 @@ function parseBirthDate(value: string) {
   return parsed;
 }
 
+function toPublicUserResponse(user: UserDoc) {
+  return {
+    userId: String(user._id),
+    username: user.username,
+    fullName: user.fullName || "",
+    avatarUrl: user.avatarUrl || "",
+    bio: user.bio || "",
+    oauthProvider: user.oauthProvider || "local",
+  };
+}
+
 export const usersController = {
+  async getPublicById(req: Request, res: Response) {
+    const { userId } = req.params;
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "invalid user id" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    return res.json({ user: toPublicUserResponse(user) });
+  },
+
   async getMe(req: Request, res: Response) {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: "unauthorized" });

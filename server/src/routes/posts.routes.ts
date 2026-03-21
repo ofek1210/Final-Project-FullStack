@@ -63,6 +63,33 @@ router.get("/", authMiddleware, postsController.getAll);
 router.get("/mine", authMiddleware, postsController.getMine);
 /**
  * @openapi
+ * /posts/by-user/{userId}:
+ *   get:
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     summary: List posts by user id (paged)
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: skip
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Paged posts
+ */
+router.get("/by-user/:userId", authMiddleware, postsController.getByAuthor);
+/**
+ * @openapi
  * /posts/{id}:
  *   get:
  *     tags: [Posts]

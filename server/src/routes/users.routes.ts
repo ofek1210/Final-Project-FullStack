@@ -106,4 +106,26 @@ router.patch("/me", authMiddleware, (req, res) => {
   });
 });
 
+/**
+ * @openapi
+ * /users/profile/{userId}:
+ *   get:
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Get another user's public profile
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Public profile
+ *       404:
+ *         description: Not found
+ */
+router.get("/profile/:userId", authMiddleware, usersController.getPublicById);
+
 export default router;

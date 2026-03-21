@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Feed from "./pages/Feed";
 import PostDetails from "./pages/PostDetails";
 import AiSearch from "./pages/AiSearch";
+import UserProfile from "./pages/UserProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
@@ -39,6 +40,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/users/:userId"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             }
           />

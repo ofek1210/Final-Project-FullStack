@@ -98,7 +98,12 @@ export default function PostDetails() {
             color: "#fff",
           }}
         >
-          <div style={{ fontWeight: 600 }}>{post.author.username}</div>
+          <Link
+            to={`/users/${post.author.userId}`}
+            style={{ fontWeight: 600, color: "#e0e7ff", textDecoration: "none" }}
+          >
+            {post.author.username}
+          </Link>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
             {new Date(post.createdAt).toLocaleString()}
           </div>
@@ -143,7 +148,12 @@ export default function PostDetails() {
               color: "#fff",
             }}
           >
-            <div style={{ fontWeight: 600 }}>{comment.author.username}</div>
+            <Link
+              to={`/users/${comment.author.userId}`}
+              style={{ fontWeight: 600, color: "#e0e7ff", textDecoration: "none" }}
+            >
+              {comment.author.username}
+            </Link>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
               {new Date(comment.createdAt).toLocaleString()}
             </div>
